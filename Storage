@@ -1,0 +1,51 @@
+        try {
+            Socket nodeSocket = new Socket(startingNodeName, 123);
+
+            InputStream nodeInputStream = nodeSocket.getInputStream();
+            OutputStream nodeOutputStream = nodeSocket.getOutputStream();
+
+            nodeOutputStream.write("get_next_node_address".getBytes());
+
+            byte[] buffer = new byte[1024];
+            int bytesRead = nodeInputStream.read(buffer);
+
+            String nextNodeAddress = new String(buffer, 0, bytesRead);
+
+            while (!nextNodeAddress.isEmpty()){
+
+                Socket nextNodeSocket = new Socket(nextNodeAddress, 1234);
+
+                InputStream nextNodeInputStream = nextNodeSocket.getInputStream();
+                OutputStream nextNodeOutputStream = nextNodeSocket.getOutputStream();
+
+                buffer = new byte[1024];
+                bytesRead = nextNodeInputStream.read(buffer);
+                nextNodeAddress  = new String(buffer, 0, bytesRead);
+
+                String nextNodeName = "node-" +nodeList.size();
+                nodeList.add(nextNodeName);
+
+                nextNodeInputStream.close();
+                nextNodeOutputStream.close();
+                nextNodeSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+                        String str1 = nodes.get(0);
+                        String[] split = str1.split("/");
+                        String port = split[1];
+
+                        Socket nearSocket = new Socket(str1, Integer.parseInt(port));
+                        PrintWriter nearOut = new PrintWriter(socket.getOutputStream(), true);
+                        nearOut.println("LOOKUP" + key);
+
+                        BufferedReader nearIn = new BufferedReader(new InputStreamReader(nearSocket.getInputStream()));
+                        String nearResponse = nearIn.readLine();
+
+                        if(!output.equals("NOTFOUND")) {
+                            socket.close();
+                            return output;
