@@ -26,13 +26,13 @@ public class DSTStore {
 
     // Do not change the interface!
     public boolean storeValue(String startingNodeName, String value) {
-
+        System.out.println("here");
         // Compute the key for the input using the SHA-256 hash.
             String key = sha256(value);
 
         // Connect to the DSTHash23 network using startingNodeName.
         boolean stored = false;
-        System.out.println("here");
+
         try {
             Socket socket = new Socket(startingNodeName, 20111);
             PrintWriter pr = new PrintWriter(socket.getOutputStream(), true);
