@@ -23,7 +23,7 @@ public class DSTStoreCmdLine {
 	    String value = "";
 	    try {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		String line = "";
+		String line = "Hello";
 		do {
 		    line = br.readLine();
 		    if (line == null) {

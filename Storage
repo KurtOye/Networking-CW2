@@ -49,3 +49,6 @@
                         if(!output.equals("NOTFOUND")) {
                             socket.close();
                             return output;
+
+
+                            for (int i = 0; i < 4; i++)

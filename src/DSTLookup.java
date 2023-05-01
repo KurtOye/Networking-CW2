@@ -6,22 +6,14 @@
 // 20384463
 // kurt.oyewole@city.ac.uk
 
-import org.w3c.dom.Node;
-
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.Buffer;
+
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
+
 
 public class DSTLookup {
-
 
     // Do not change the interface!
     public DSTLookup() {
@@ -34,25 +26,27 @@ public class DSTLookup {
         // Connect to the DSTHash23 network using startingNodeName.
         try {
             Socket socket = new Socket(startingNodeName, 20111);
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            out.println("HELLO ephemeral");
+            PrintWriter pr = new PrintWriter(socket.getOutputStream(), true);
+            pr.println("HELLO ephemeral");
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String str = in.readLine();
-            System.out.println("client" + str);
+            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String strIn = br.readLine();
+            System.out.println(strIn);
 
             // Find the node in the network with the ID closest to the key.
-            out.println("FINDNEAREST " + key);
+            pr.println("FINDNEAREST " + key);
             ArrayList<String> nodes = new ArrayList<>();
-            for (String line = in.readLine(); line != null; line = in.readLine()) {
+            String response;
+            for (int i = 0; i < 5; i++) {
+                String line = br.readLine();
                 nodes.add(line);
-                System.out.println(line);
+                //System.out.println(line);
             }
 
-            if(nodes.size() < 2){
+            if (nodes.size() < 2) {
                 output = "No nearest node found for key: " + key;
-                out.close();
-                in.close();
+                pr.close();
+                br.close();
                 socket.close();
                 return output;
             }
@@ -61,17 +55,31 @@ public class DSTLookup {
 
                 String str1 = nodes.get(i);
                 String[] split = str1.split("/");
-                String port = split[1];
+                String ip = split[0];
+                int port = Integer.parseInt(split[1]);
 
-                Socket nearSocket = new Socket(str1, Integer.parseInt(port));
-                PrintWriter nearOut = new PrintWriter(socket.getOutputStream(), true);
-                nearOut.println("LOOKUP" + key);
+                Socket nearSocket = new Socket(ip, port);
 
-                BufferedReader nearIn = new BufferedReader(new InputStreamReader(nearSocket.getInputStream()));
-                output = nearIn.readLine();
+                PrintWriter nearPW = new PrintWriter(nearSocket.getOutputStream(), true);
+                nearPW.println("HELLO ephemeral");
+                nearPW.println("LOOKUP " + key);
 
-                nearOut.close();
-                nearIn.close();
+                BufferedReader nearBR = new BufferedReader(new InputStreamReader(nearSocket.getInputStream()));
+                nearBR.readLine();
+                String nearOut = nearBR.readLine();
+
+                if (nearOut.startsWith("FOUND")) {
+                    String[] split2 = nearOut.split(" ");
+                    int num = Integer.parseInt(split2[1]);
+                    output = "";
+                    for (int y = 0; y < num; y++) {
+                        output = output.concat(nearBR.readLine() + "\n");
+                    }
+                }
+
+                nearPW.println("BYE Time-out");
+                nearPW.close();
+                nearBR.close();
                 nearSocket.close();
 
                 if (!output.equals("NOTFOUND")) {
@@ -79,17 +87,17 @@ public class DSTLookup {
                 }
             }
 
-            out.println("BYE Time-out");
-            out.close();
-            in.close();
+            pr.println("BYE Time-out");
+            pr.close();
+            br.close();
             socket.close();
             return output;
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        // Otherwise return "NOTFOUND"
 
     }
+
 }
 
