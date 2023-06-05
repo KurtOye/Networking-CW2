@@ -2,15 +2,17 @@
 // Coursework 2022/2023
 //
 // Submission by
-// Kurt Oyewole
-// 20384463
-// kurt.oyewole@city.ac.uk
+//
+//
+//
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.Socket;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class DSTLookup {
@@ -21,83 +23,89 @@ public class DSTLookup {
 
     // Do not change the interface!
     public String getValue(String startingNodeName, String key) {
-        String output = "NOTFOUND";
+        String out = "NOTFOUND";
+
+
 
         // Connect to the DSTHash23 network using startingNodeName.
+        System.out.println("Connecting to " + startingNodeName);
         try {
-            Socket socket = new Socket(startingNodeName, 20111);
-            PrintWriter pr = new PrintWriter(socket.getOutputStream(), true);
-            pr.println("HELLO ephemeral");
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String strIn = br.readLine();
-            System.out.println(strIn);
+            String[] split1 = startingNodeName.split("/");
+            int port = Integer.parseInt(split1[1]);
+            String IP = split1[0];
+
+
+            Socket socket = new Socket(IP, port);
+            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer.println("HELLO ephemeral");
+
+            String in = reader.readLine();
+            System.out.println(in);
 
             // Find the node in the network with the ID closest to the key.
-            pr.println("FINDNEAREST " + key);
+            writer.println("FINDNEAREST " + key);
             ArrayList<String> nodes = new ArrayList<>();
-            String response;
-            for (int i = 0; i < 5; i++) {
-                String line = br.readLine();
+
+            for (int i = 0; i < 3; i++) {
+                String line = reader.readLine();
                 nodes.add(line);
-                //System.out.println(line);
             }
 
             if (nodes.size() < 2) {
-                output = "No nearest node found for key: " + key;
-                pr.close();
-                br.close();
+                out = "No nearest node found for key: " + key;
+                writer.close();
+                reader.close();
                 socket.close();
-                return output;
+                return out;
             }
 
             for (int i = 1; i < nodes.size(); i++) {
 
                 String str1 = nodes.get(i);
                 String[] split = str1.split("/");
-                String ip = split[0];
-                int port = Integer.parseInt(split[1]);
+                String ip1 = split[0];
+                int port1 = Integer.parseInt(split[1]);
 
-                Socket nearSocket = new Socket(ip, port);
+                Socket nearSocket = new Socket(ip1, port1);
 
                 PrintWriter nearPW = new PrintWriter(nearSocket.getOutputStream(), true);
+                BufferedReader nearBR = new BufferedReader(new InputStreamReader(nearSocket.getInputStream()));
+
                 nearPW.println("HELLO ephemeral");
                 nearPW.println("LOOKUP " + key);
 
-                BufferedReader nearBR = new BufferedReader(new InputStreamReader(nearSocket.getInputStream()));
                 nearBR.readLine();
                 String nearOut = nearBR.readLine();
 
                 if (nearOut.startsWith("FOUND")) {
                     String[] split2 = nearOut.split(" ");
                     int num = Integer.parseInt(split2[1]);
-                    output = "";
-                    for (int y = 0; y < num; y++) {
-                        output = output.concat(nearBR.readLine() + "\n");
+                    out = "";
+                    for (int i1 = 0; i1 < num; i1++) {
+                        out = out.concat(nearBR.readLine() + "\n");
                     }
                 }
 
-                nearPW.println("BYE Time-out");
                 nearPW.close();
                 nearBR.close();
                 nearSocket.close();
-
-                if (!output.equals("NOTFOUND")) {
+                if (!out.equals("NOTFOUND")) {
                     break;
                 }
             }
 
-            pr.println("BYE Time-out");
-            pr.close();
-            br.close();
+            writer.close();
+            reader.close();
             socket.close();
-            return output;
+            return out;
+
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
-}
 
+}
